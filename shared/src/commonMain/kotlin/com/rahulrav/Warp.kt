@@ -1,35 +1,50 @@
 package com.rahulrav
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+private const val FONT_SIZE = 48
+private const val LINE_HEIGHT = 1.5 * FONT_SIZE
 
 @Composable
-@Preview
 fun Warp() {
-    MaterialTheme {
-        var showContent by remember { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .safeContentPadding()
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+    val hScrollState = rememberScrollState()
+    val vScrollState = rememberScrollState()
+    MaterialTheme(colorScheme = darkColorScheme()) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surface
         ) {
-            Button(onClick = { showContent = !showContent }) {
-                Text("Click me!")
+            Box(
+                modifier = Modifier.fillMaxSize()
+                    .padding(128.dp)
+                    .verticalScroll(vScrollState)
+                    .horizontalScroll(hScrollState)
+            ) {
+                // language="kotlin"
+                Text(
+                    text = """
+                        val x = 10
+                        println("Hello")
+                    """.trimIndent(),
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = FONT_SIZE.sp,
+                    lineHeight = LINE_HEIGHT.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
