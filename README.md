@@ -7,7 +7,7 @@ code-snippets from the ground up.
 
 ## Demo
 
-![demo](assets/warp.mp4)
+![demo](assets/warp.gif)
 
 ## Implementation
 
