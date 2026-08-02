@@ -3,11 +3,11 @@
 Warp is an attempt at implementing Keynote style `Magic Move` (or PowerPoint `Morph`) for
 code-snippets from the ground up.
 
-![warp](assets/warp.jpg)
+<img src="assets/warp.jpg" alt="Warp Logo" style="display: block; margin-left: auto; margin-right: auto"/>
 
 ## Demo
 
-![demo](assets/warp.webp)
+<img src="assets/warp.webp" alt="Warp Demo" style="display: block; margin-left: auto; margin-right: auto"/>
 
 ## Implementation
 
