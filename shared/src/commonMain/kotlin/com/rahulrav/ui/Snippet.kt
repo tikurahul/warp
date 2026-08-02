@@ -14,8 +14,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.sp
 import com.rahulrav.diff.State as DiffState
 
-private const val FONT_SIZE = 48
-private const val LINE_HEIGHT = 1.5 * FONT_SIZE
+const val FONT_SIZE = 48
+const val LINE_HEIGHT = 1.5 * FONT_SIZE
 
 @Composable
 internal fun Snippet(

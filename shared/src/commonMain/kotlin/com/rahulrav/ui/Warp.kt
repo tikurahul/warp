@@ -24,22 +24,13 @@ import androidx.compose.ui.unit.dp
 import com.rahulrav.diff.diff
 import com.rahulrav.parser.parseKotlin
 import kotlinx.coroutines.delay
-import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
 import com.rahulrav.diff.State as DiffState
 
 // Magic Move
 // Define previous and current states
-
-@Language("kotlin")
-val slideP = """
-  val x = 10
-""".trimIndent()
-
-@Language("kotlin")
-val slideC = """
-  val x = 20
-""".trimIndent()
+val slideP = SLIDES[2]
+val slideC = SLIDES[3]
 
 // The default bounds transform
 val boundsTransform = BoundsTransform { _, _ ->
