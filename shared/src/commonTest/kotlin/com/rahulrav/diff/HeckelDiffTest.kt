@@ -26,6 +26,26 @@ class HeckelDiffTest {
     }
 
     @Test
+    fun basicDiff2() {
+        @Language("kotlin")
+        val slideP = """
+            val x = 10
+        """.trimIndent()
+
+        @Language("kotlin")
+        val slideC = """
+            val x = 20
+        """.trimIndent()
+
+        val previous = parseKotlin(code = slideP)
+        val current = parseKotlin(code = slideC)
+        val changes = diff(previous = previous, current = current)
+        changes.forEach { change ->
+            println(change)
+        }
+    }
+
+    @Test
     fun lineMoveDiff() {
         @Language("kotlin")
         val slideP = """

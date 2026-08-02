@@ -6,6 +6,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.rahulrav.ui.Scaffold
 
 fun main() = application {
     val windowState = rememberWindowState(
@@ -18,6 +19,6 @@ fun main() = application {
         state = windowState,
         title = "Warp ✨",
     ) {
-        Warp()
+        Scaffold()
     }
 }
