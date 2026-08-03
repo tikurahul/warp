@@ -3,7 +3,17 @@ package com.rahulrav.ui
 import org.intellij.lang.annotations.Language
 
 @Language("kotlin")
-val SLIDES = listOf(
+val BASIC_SLIDES = listOf(
+    """
+        val x = 10
+    """.trimIndent(),
+    """
+        val x = 20
+    """.trimIndent()
+)
+
+@Language("kotlin")
+val TRACING_SLIDES = listOf(
     """
       import androidx.tracing.Tracer
       import androidx.tracing.DelicateTracingApi
@@ -99,4 +109,4 @@ val SLIDES = listOf(
     """.trimIndent()
 )
 
-val SLIDE_PAIRS = SLIDES.zipWithNext()
+val SLIDE_PAIRS = TRACING_SLIDES.zipWithNext()
