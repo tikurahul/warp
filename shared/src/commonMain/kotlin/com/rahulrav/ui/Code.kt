@@ -2,6 +2,9 @@ package com.rahulrav.ui
 
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,25 +50,53 @@ internal fun Code(
                         }
 
                         is DiffState.Insert -> {
-                            // Should automatically fade-in
-                            Text(
-                                state.token.content,
-                                color = state.color(),
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = FONT_SIZE.sp,
-                                lineHeight = LINE_HEIGHT.sp,
-                            )
+                            with(sharedScope) {
+                                with(animatedVisibilityScope) {
+                                    Text(
+                                        state.token.content,
+                                        color = state.color(),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = FONT_SIZE.sp,
+                                        lineHeight = LINE_HEIGHT.sp,
+                                        modifier = Modifier
+                                            .sharedElement(
+                                                sharedContentState = rememberSharedContentState(key = state.token.contentId()),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                boundsTransform = boundsTransform
+                                            )
+                                            .renderInSharedTransitionScopeOverlay()
+                                            .animateEnterExit(
+                                                enter = fadeIn(animationSpec = tween(durationMillis = TWEEN_DURATION_MS)),
+                                                exit = fadeOut(animationSpec = tween(durationMillis = TWEEN_DURATION_MS))
+                                            )
+                                    )
+                                }
+                            }
                         }
 
                         is DiffState.Delete -> {
-                            // Should automatically fade-out
-                            Text(
-                                state.token.content,
-                                color = state.color(),
-                                fontFamily = FontFamily.Monospace,
-                                fontSize = FONT_SIZE.sp,
-                                lineHeight = LINE_HEIGHT.sp,
-                            )
+                            with(sharedScope) {
+                                with(animatedVisibilityScope) {
+                                    Text(
+                                        state.token.content,
+                                        color = state.color(),
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = FONT_SIZE.sp,
+                                        lineHeight = LINE_HEIGHT.sp,
+                                        modifier = Modifier
+                                            .sharedElement(
+                                                sharedContentState = rememberSharedContentState(key = state.token.contentId()),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                boundsTransform = boundsTransform
+                                            )
+                                            .renderInSharedTransitionScopeOverlay()
+                                            .animateEnterExit(
+                                                enter = fadeIn(animationSpec = tween(durationMillis = TWEEN_DURATION_MS)),
+                                                exit = fadeOut(animationSpec = tween(durationMillis = TWEEN_DURATION_MS))
+                                            )
+                                    )
+                                }
+                            }
                         }
 
                         else -> {
@@ -78,7 +109,15 @@ internal fun Code(
     }
 }
 
-internal fun DiffState.Match.sharedKey(): ULong {
-    return currentIdx.toULong().shl(bitCount = 32)
-        .or(other = previousIdx.toULong() and 0xFFFFFFFFUL)
+internal fun DiffState.Match.sharedKey(): String {
+    return if (previous.hasContentId() && current.hasContentId()) {
+        check(previous.contentId() == current.contentId()) {
+            "Content Id must match for $previous and $current"
+        }
+        current.contentId()
+    } else {
+        // The next best thing is to return an identifier that is automatically unique
+        // between 2 slides (but not across a deck).
+        "Match('$previousIdx' -> '$currentIdx')"
+    }
 }

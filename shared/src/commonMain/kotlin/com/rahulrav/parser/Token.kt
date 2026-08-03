@@ -18,6 +18,26 @@ class Token(
     val startIndex: Int,
     val endIndex: Int
 ) {
+    /** The underlying content id that was assigned to the token.
+     * This is guaranteed to be stable across a deck. */
+    private var contentId: String? = null
+
+    fun hasContentId(): Boolean {
+        return contentId != null
+    }
+
+    fun assignContentId(newContentId: String) {
+        val contentId = contentId
+        check(contentId == null) { "Cannot override ContentId for $this" }
+        this.contentId = newContentId
+    }
+
+    fun contentId(): String {
+        val contentId = contentId
+        check(contentId != null) { "Content Id was not assigned to $this" }
+        return contentId
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

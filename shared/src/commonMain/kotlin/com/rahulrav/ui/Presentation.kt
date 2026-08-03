@@ -1,5 +1,6 @@
 package com.rahulrav.ui
 
+import com.rahulrav.diff.ContentIds
 import com.rahulrav.diff.State
 import com.rahulrav.diff.diff
 import com.rahulrav.parser.parseKotlin
@@ -9,13 +10,25 @@ data class Slide(val rows: List<List<State>>)
 
 fun buildPresentation(contents: List<String>): List<Slide> {
     if (contents.isEmpty()) return emptyList()
+    val contentIds = ContentIds()
     val deck = mutableListOf<Slide>()
     val slides = contents.map { slide -> parseKotlin(code = slide) }
+    // Assign content ids for all the tokens we see in the first slide.
+    // For every subsequent match, we propagate the existing token ids.
+    // New ids are only generated when we see new inserts.
+    slides.first().forEach { token ->
+        contentIds.assignContentId(token)
+    }
     val slidePairs = slides.zipWithNext()
-    slidePairs.forEach { (previous, current) ->
-        val states = diff(previous, current)
-        deck += previousSlide(states)
-        deck += currentSlide(states)
+    slidePairs.forEachIndexed { index, (previous, current) ->
+        val states = diff(previous, current, contentIds)
+        if (index == 0) {
+            deck += previousSlide(states)
+            deck += currentSlide(states)
+        } else {
+            // For subsequent slides only build the incremental state
+            deck += currentSlide(states)
+        }
     }
     return deck
 }

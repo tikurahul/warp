@@ -11,7 +11,12 @@ import com.rahulrav.parser.Token
 // This can help compute structural similarities between 2 text sequences.
 // Once we know this, we should be able to animate cleanly between these 2 sequences.
 
-fun diff(previous: List<Token>, current: List<Token>): List<State> {
+fun diff(
+    previous: List<Token>,
+    current: List<Token>,
+    /** Optionally pass in [ContentIds] to manage assignment of ids that are stable. */
+    contentIds: ContentIds? = null
+): List<State> {
     // Symbol tables
     val statesP: Array<State> = Array(previous.size) { State.Empty }
     val statesC: Array<State> = Array(current.size) { State.Empty }
@@ -105,7 +110,16 @@ fun diff(previous: List<Token>, current: List<Token>): List<State> {
             deleteIdx = j
         }
         if (i < statesC.size) {
+            val state = statesC[i]
+            if (state is State.Match) {
+                if (contentIds != null && state.previous.hasContentId()) {
+                    // Propagate content ids for matched tokens
+                    state.current.assignContentId(newContentId = state.previous.contentId())
+                }
+            }
             if (statesC[i] == State.Empty) {
+                // Assign a new content id for newly inserted tokens
+                contentIds?.assignContentId(current[i])
                 statesC[i] = State.Insert(token = current[i], index = i)
             }
             edits += statesC[i]

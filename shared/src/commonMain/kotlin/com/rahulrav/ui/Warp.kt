@@ -3,7 +3,12 @@ package com.rahulrav.ui
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,9 +30,11 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.seconds
 
-// The default bounds transform
+const val TWEEN_DURATION_MS = 200 // Milliseconds
 val boundsTransform = BoundsTransform { _, _ ->
-    tween(durationMillis = 250)
+    spring(
+        dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow
+    )
 }
 
 @Composable
@@ -42,9 +49,7 @@ fun Scaffold() {
             modifier = Modifier.fillMaxSize(), color = Background
         ) {
             Box(
-                modifier = Modifier.fillMaxSize()
-                    .padding(128.dp)
-                    .verticalScroll(vScrollState)
+                modifier = Modifier.fillMaxSize().padding(128.dp).verticalScroll(vScrollState)
                     .horizontalScroll(hScrollState)
             ) {
                 Warp(slides = presentation, modifier = Modifier)
@@ -55,29 +60,40 @@ fun Scaffold() {
 
 @Composable
 fun Warp(
-    slides: List<Slide>,
-    modifier: Modifier
+    slides: List<Slide>, modifier: Modifier
 ) {
     var slideIdx by mutableIntStateOf(0)
     val autoPlay by remember { mutableStateOf(true) }
     SharedTransitionLayout(modifier = modifier) {
-        AnimatedContent(targetState = slideIdx, label = "WarpTransition") { _ ->
+        AnimatedContent(
+            targetState = slideIdx, transitionSpec = {
+                fadeIn(
+                    animationSpec = tween(durationMillis = TWEEN_DURATION_MS)
+                ).togetherWith(
+                    exit = fadeOut(
+                        animationSpec = tween(durationMillis = TWEEN_DURATION_MS)
+                    )
+                )
+            }, label = "WarpTransition"
+        ) { targetIdx ->
             Code(
                 modifier = modifier,
                 slides = slides,
-                idx = slideIdx,
+                idx = targetIdx,
                 sharedScope = this@SharedTransitionLayout,
-                animatedVisibilityScope = this
+                animatedVisibilityScope = this@AnimatedContent
             )
         }
     }
     LaunchedEffect(autoPlay) {
         // Keep replaying animation
         if (autoPlay) {
+            val size = slides.size
             while (true) {
-                val next = if (slideIdx == 0) 1 else 0
                 delay(2.seconds)
-                slideIdx = next
+                var idx = slideIdx
+                idx += 1
+                slideIdx = idx % size
             }
         }
     }
