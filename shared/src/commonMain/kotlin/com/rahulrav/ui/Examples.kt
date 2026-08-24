@@ -13,6 +13,24 @@ val BASIC_SLIDES = listOf(
 )
 
 @Language("kotlin")
+val LINE_MOVES = listOf(
+    """
+        fun sequence() {
+          val x = one()
+          val y = two()
+          done()
+        }
+    """.trimIndent(),
+    """
+        fun sequence() {
+          val y = two()
+          val x = one()
+          done()
+        }
+    """.trimIndent()
+)
+
+@Language("kotlin")
 val TRACING_SLIDES = listOf(
     """
       import androidx.tracing.Tracer
