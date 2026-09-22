@@ -61,7 +61,7 @@ fun diff(
                 val match = resolveMatch(potential = potential, current = previousState)
                 statesP[match.previousIdx] = match
                 statesC[match.currentIdx] = match
-                // Also match related tokens when applicable
+                // Related Matches
                 val related = nextToken.related
                 val previousRelated = nextPreviousToken.related
                 if (related != null && previousRelated != null) {
@@ -69,14 +69,8 @@ fun diff(
                         previous = previousRelated,
                         current = related,
                     )
-                    statesP[match.previousIdx] = resolveMatch(
-                        potential = match,
-                        current = statesP[match.previousIdx]
-                    )
-                    statesC[match.currentIdx] = resolveMatch(
-                        potential = match,
-                        current = statesC[match.currentIdx]
-                    )
+                    statesP[match.previousIdx] = match
+                    statesC[match.currentIdx] = match
                 }
             }
         }
@@ -99,7 +93,7 @@ fun diff(
                 val match = resolveMatch(potential = potential, current = nextPriorState)
                 statesP[match.previousIdx] = match
                 statesC[match.currentIdx] = match
-                // Also match related tokens when applicable
+                // Related Matches
                 val related = priorToken.related
                 val previousRelated = priorPreviousToken.related
                 if (related != null && previousRelated != null) {
@@ -107,14 +101,8 @@ fun diff(
                         previous = previousRelated,
                         current = related,
                     )
-                    statesP[match.previousIdx] = resolveMatch(
-                        potential = match,
-                        current = statesP[match.previousIdx]
-                    )
-                    statesC[match.currentIdx] = resolveMatch(
-                        potential = match,
-                        current = statesC[match.currentIdx]
-                    )
+                    statesP[match.previousIdx] = match
+                    statesC[match.currentIdx] = match
                 }
             }
         }
