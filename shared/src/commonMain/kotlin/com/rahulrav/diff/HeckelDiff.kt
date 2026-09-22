@@ -25,21 +25,18 @@ fun diff(
     val (freqC, _) = frequencyAndContext(tokens = current)
     // Phase 1: Find unique anchors such that frequency = 1 in both lists.
     // That is a match.
-    current.forEachIndexed { index, token ->
+    current.forEach { token ->
         val c = freqC[token]
         val p = freqP[token]
         val context = contextP[token]
         if (c == 1 && p == 1 && context != null) {
-            val indexP = context.index
             // Here we are also keeping track of the previous token.
             // This is because we exclude the actual start, and end offsets from the equals()
             // to find high quality anchor points.
             val tokenP = context.token
             val match = State.Match(
                 previous = tokenP,
-                previousIdx = indexP,
                 current = token,
-                currentIdx = index
             )
             statesP[match.previousIdx] = match
             statesC[match.currentIdx] = match
@@ -55,19 +52,32 @@ fun diff(
             val nextPreviousIndex = state.previousIdx + 1
             val nextToken = current.getOrNull(nextIndex)
             val nextPreviousToken = previous.getOrNull(nextPreviousIndex)
-            if (nextPreviousToken != null &&
-                nextToken == nextPreviousToken &&
-                statesC[nextIndex] == State.Empty &&
-                statesP[nextPreviousIndex] == State.Empty
-            ) {
-                val match = State.Match(
+            if (nextPreviousToken != null && nextToken == nextPreviousToken) {
+                val previousState = statesP[nextPreviousIndex]
+                val potential = State.Match(
                     previous = nextPreviousToken,
-                    previousIdx = state.previousIdx + 1,
                     current = nextToken,
-                    currentIdx = index + 1,
                 )
+                val match = resolveMatch(potential = potential, current = previousState)
                 statesP[match.previousIdx] = match
                 statesC[match.currentIdx] = match
+                // Also match related tokens when applicable
+                val related = nextToken.related
+                val previousRelated = nextPreviousToken.related
+                if (related != null && previousRelated != null) {
+                    val match = State.Match(
+                        previous = previousRelated,
+                        current = related,
+                    )
+                    statesP[match.previousIdx] = resolveMatch(
+                        potential = match,
+                        current = statesP[match.previousIdx]
+                    )
+                    statesC[match.currentIdx] = resolveMatch(
+                        potential = match,
+                        current = statesC[match.currentIdx]
+                    )
+                }
             }
         }
     }
@@ -80,19 +90,32 @@ fun diff(
             val nextPriorIndex = state.previousIdx - 1
             val priorToken = current.getOrNull(priorIndex)
             val priorPreviousToken = previous.getOrNull(nextPriorIndex)
-            if (priorToken != null &&
-                priorToken == priorPreviousToken &&
-                statesC[priorIndex] == State.Empty &&
-                statesP[nextPriorIndex] == State.Empty
-            ) {
-                val match = State.Match(
+            if (priorToken != null && priorToken == priorPreviousToken) {
+                val nextPriorState = statesP[nextPriorIndex]
+                val potential = State.Match(
                     previous = priorPreviousToken,
-                    previousIdx = state.previousIdx - 1,
                     current = priorToken,
-                    currentIdx = index - 1
                 )
+                val match = resolveMatch(potential = potential, current = nextPriorState)
                 statesP[match.previousIdx] = match
                 statesC[match.currentIdx] = match
+                // Also match related tokens when applicable
+                val related = priorToken.related
+                val previousRelated = priorPreviousToken.related
+                if (related != null && previousRelated != null) {
+                    val match = State.Match(
+                        previous = previousRelated,
+                        current = related,
+                    )
+                    statesP[match.previousIdx] = resolveMatch(
+                        potential = match,
+                        current = statesP[match.previousIdx]
+                    )
+                    statesC[match.currentIdx] = resolveMatch(
+                        potential = match,
+                        current = statesC[match.currentIdx]
+                    )
+                }
             }
         }
     }
@@ -138,6 +161,18 @@ fun diff(
         }
     }
     return edits
+}
+
+internal fun resolveMatch(potential: State.Match, current: State): State.Match {
+    return if (current is State.Match) {
+        if (current.penalty() <= potential.penalty()) {
+            current
+        } else {
+            potential
+        }
+    } else {
+        potential
+    }
 }
 
 internal data class TokenContext(val token: Token, val index: Int)

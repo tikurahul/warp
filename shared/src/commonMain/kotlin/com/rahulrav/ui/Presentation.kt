@@ -3,6 +3,7 @@ package com.rahulrav.ui
 import com.rahulrav.diff.ContentIds
 import com.rahulrav.diff.State
 import com.rahulrav.diff.diff
+import com.rahulrav.parser.buildRelatedTokens
 import com.rahulrav.parser.parseKotlin
 
 /** The slide. */
@@ -12,7 +13,11 @@ fun buildPresentation(contents: List<String>): List<Slide> {
     if (contents.isEmpty()) return emptyList()
     val contentIds = ContentIds()
     val deck = mutableListOf<Slide>()
-    val slides = contents.map { slide -> parseKotlin(code = slide) }
+    val slides = contents.map { slide ->
+        val tokens = parseKotlin(code = slide)
+        buildRelatedTokens(tokens)
+        tokens
+    }
     // Assign content ids for all the tokens we see in the first slide.
     // For every subsequent match, we propagate the existing token ids.
     // New ids are only generated when we see new inserts.

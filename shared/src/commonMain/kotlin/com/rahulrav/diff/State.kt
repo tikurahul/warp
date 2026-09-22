@@ -1,6 +1,7 @@
 package com.rahulrav.diff
 
 import com.rahulrav.parser.Token
+import kotlin.math.abs
 
 sealed class State {
     /** Represents the initial state. */
@@ -9,11 +10,17 @@ sealed class State {
     /** This represents a Match. */
     data class Match(
         val previous: Token,
-        val previousIdx: Int,
         val current: Token,
-        val currentIdx: Int
     ) : State() {
         fun text() = current.content
+        val previousIdx = previous.index
+        val currentIdx = current.index
+        fun penalty(): Int {
+            val indexPenalty = abs(current.startIndex - previous.startIndex)
+            val linePenalty = abs(current.lineNumber - previous.lineNumber)
+            val depthPenalty = abs(current.depth - previous.depth)
+            return indexPenalty + linePenalty + depthPenalty
+        }
     }
 
     /** Represents an insert. */

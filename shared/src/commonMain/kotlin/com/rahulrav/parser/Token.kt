@@ -10,17 +10,29 @@ class Token(
     /** The actual content of the parsed token. */
     val content: String,
     /** The primary scope */
-    val scope: String,
+    val scope: String,/* More context for animations. */
     /** The depth of the primary scope. */
-    val depth: Int,
-    /* More context for animations. */
-    val lineNumber: Int,
-    val startIndex: Int,
-    val endIndex: Int
+    val depth: Int, val lineNumber: Int, val startIndex: Int, val endIndex: Int
 ) {
     /** The underlying content id that was assigned to the token.
      * This is guaranteed to be stable across a deck. */
     private var contentId: String? = null
+
+    /**
+     * A related token, when applicable. This is only ever populated for [Token]s that are
+     * brackets. So `}`, `]`, `>`, `)` will point to their corresponding matching begin pairs.
+     *
+     * This helps ensure that once we find a match for one of these [Token]s, we also match the
+     * corresponding matching begin tokens.
+     */
+    public var related: Token? = null
+        private set
+
+    /**
+     * What `index` does the [Token] occur in, after a parse tree was constructed.
+     */
+    public var index: Int = 0
+        private set
 
     fun hasContentId(): Boolean {
         return contentId != null
@@ -38,13 +50,20 @@ class Token(
         return contentId
     }
 
+    fun assignRelated(match: Token) {
+        this.related = match
+    }
+
+    fun assignIndex(index: Int) {
+        this.index = index
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as Token
 
-        if (depth != other.depth) return false
         if (content != other.content) return false
         if (scope != other.scope) return false
 
@@ -52,8 +71,7 @@ class Token(
     }
 
     override fun hashCode(): Int {
-        var result = depth
-        result = 31 * result + content.hashCode()
+        var result = 31 * content.hashCode()
         result = 31 * result + scope.hashCode()
         return result
     }

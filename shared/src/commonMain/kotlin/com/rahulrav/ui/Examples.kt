@@ -31,6 +31,59 @@ val LINE_MOVES = listOf(
 )
 
 @Language("kotlin")
+val LINE_MOVES_2 = listOf(
+    """
+        fun sequence() {
+          val x = one()
+          val y = two()
+          // ...
+          val z = three()
+          done()
+        }
+    """.trimIndent(),
+    """
+        fun sequence() {
+          val y = two()
+          val x = one()
+          // ...
+          val z = three()
+          done()
+        }
+    """.trimIndent()
+)
+
+@Language("kotlin")
+val BLOCK_MOVES = listOf(
+    """
+    fun inner() {
+      // An inner block
+      val x = 10
+      println(x)
+    }
+    """.trimIndent(),
+    """
+    fun outer() {
+      fun inner() {
+        // An inner block
+        val x = 10
+        println(x)
+      }
+    }
+    """.trimIndent(),
+    """
+    fun outer2() {
+      fun outer() {
+        fun inner() {
+          // An inner block
+          val x = 10
+          println(x)
+        }
+      }
+    }
+    """.trimIndent(),
+)
+
+@Language("kotlin")
 val TRACING_SLIDES = listOf(
     """
       import androidx.tracing.Tracer
