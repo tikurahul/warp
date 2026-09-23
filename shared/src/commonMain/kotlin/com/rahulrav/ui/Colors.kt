@@ -8,6 +8,7 @@ import com.rahulrav.parser.Token
 val Background = Color(0xFF1E1F22)  // Canvas / Surface
 val Foreground = Color(0xFFBCBEC4)  // Default text / Parameters / Operators
 val Keyword = Color(0xFFCF8E6D)  // 'fun', 'val', 'import', 'class', etc.
+
 val String = Color(0xFF6AAB73)  // "string literals"
 val Comment = Color(0xFF7A7E85)  // // comments
 val Number = Color(0xFF2AACB8)  // 123, 0xFF, etc.
