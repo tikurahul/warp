@@ -42,7 +42,7 @@ fun Scaffold() {
     val hScrollState = rememberScrollState()
     val vScrollState = rememberScrollState()
     val presentation: List<Slide> = remember {
-        buildPresentation(contents = TRACING_SLIDES)
+        buildPresentation(contents = BLOCK_MOVES)
     }
     MaterialTheme(colorScheme = darkColorScheme()) {
         Surface(

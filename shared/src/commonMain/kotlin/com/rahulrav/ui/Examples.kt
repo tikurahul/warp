@@ -47,6 +47,7 @@ val LINE_MOVES_2 = listOf(
           val x = one()
           // ...
           val z = three()
+          val m = four()
           done()
         }
     """.trimIndent()
