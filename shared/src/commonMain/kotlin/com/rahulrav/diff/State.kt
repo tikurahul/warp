@@ -16,10 +16,10 @@ sealed class State {
         val previousIdx = previous.index
         val currentIdx = current.index
         fun penalty(): Int {
+            // Picks the match that is closer.
             val indexPenalty = abs(current.startIndex - previous.startIndex)
             val linePenalty = abs(current.lineNumber - previous.lineNumber)
-            val depthPenalty = abs(current.depth - previous.depth)
-            return indexPenalty + linePenalty + depthPenalty
+            return indexPenalty + linePenalty
         }
     }
 
