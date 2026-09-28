@@ -25,11 +25,11 @@ fun diff(
     // Frequency + Context
     val (freqP, contextP) = frequencyAndContext(tokens = previous)
     val (freqC, _) = frequencyAndContext(tokens = current)
-    // Phase 1: Find unique anchors such that frequency = 1 in both lists.
-    // That is a match.
-    // Additionally: Keep track of the matches in an ObjectList, so we can use
-    // that in Phase 2, and 3.
-    val matches = mutableObjectListOf<State.Match>()
+    // Phase 1: Find unique anchors such that frequency = 1 in both lists. That is a match.
+    // Additionally: Keep track of the matches in a Queue, so we can use that in Phase 2, and 3.
+    // Note: We are not using an ObjectList here because it's only optimized for removing
+    // elements from the tail.
+    val matches = ArrayDeque<State.Match>()
     current.forEachIndexed { index, token ->
         val c = freqC[token]
         val p = freqP[token]
@@ -55,8 +55,7 @@ fun diff(
     // Move forward and find the ones that are matching adjacent to the ones that already matched.
     val steps = arrayOf(-1, 1)
     while (matches.isNotEmpty()) {
-        // Use this like a stack.
-        // Process the matches FIFO.
+        // Use this like a Queue. Process the matches FIFO.
         val frontier = matches.removeAt(index = 0)
         for (step in steps) {
             val nc = frontier.currentIdx + step
@@ -181,19 +180,25 @@ internal fun relatedToken(token: Token, index: Int, stack: MutableObjectList<Tok
         stack += TokenContext(token = token, index = index)
     } else if (token.isEnd()) {
         var i = 0
-        while (i < SEARCH_LIMIT) {
-            val stackIndex = stack.lastIndex - i
-            // Check for out of bounds
-            if (stackIndex < 0) break
-            val candidate = stack[stackIndex]
-            if (isMatching(begin = candidate.token, end = token)) {
-                stack.removeAt(stackIndex)
-                // Assign relationships to each other.
-                token.assignRelated(candidate)
-                candidate.token.assignRelated(context = TokenContext(index = index, token = token))
-                break
+        // Fast path
+        val candidate = stack.removeLastOrNull() ?: return
+        if (isMatching(begin = candidate.token, end = token)) {
+            // Assign relationships to each other.
+            token.assignRelated(related = candidate.token, relatedIndex = candidate.index)
+            candidate.token.assignRelated(related = token, relatedIndex = index)
+        } else {
+            // Slow path
+            while (i < SEARCH_LIMIT - 1) {
+                // Check our of bounds
+                val candidate = stack.removeLastOrNull() ?: break
+                if (isMatching(begin = candidate.token, end = token)) {
+                    // Assign relationships to each other.
+                    token.assignRelated(related = candidate.token, relatedIndex = candidate.index)
+                    candidate.token.assignRelated(related = token, relatedIndex = index)
+                    break
+                }
+                i += 1
             }
-            i += 1
         }
     }
 }
@@ -239,3 +244,10 @@ internal fun Token.isEnd(): Boolean {
         else -> false
     }
 }
+
+private fun <T> MutableObjectList<T>.removeLastOrNull(): T? {
+    val element = this.lastOrNull()
+    if (size > 0) this.removeAt(lastIndex)
+    return element
+}
+

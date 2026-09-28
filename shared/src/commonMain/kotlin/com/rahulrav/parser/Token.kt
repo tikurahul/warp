@@ -54,9 +54,9 @@ class Token(
         return contentId
     }
 
-    fun assignRelated(context: TokenContext) {
-        this.related = context.token
-        this.relatedIndex = context.index
+    fun assignRelated(related: Token, relatedIndex: Int) {
+        this.related = related
+        this.relatedIndex = relatedIndex
     }
 
     override fun equals(other: Any?): Boolean {
