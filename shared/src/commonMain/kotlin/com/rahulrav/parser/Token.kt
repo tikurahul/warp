@@ -1,10 +1,11 @@
 package com.rahulrav.parser
 
+import com.rahulrav.diff.TokenContext
+
 /**
  * The [Token] that will be passed to the diffing algorithm to find structural similarities.
  *
- * We are using a combination of the [content], and the `primary` [scope] + its [depth] to find
- * `anchor`s.
+ * We are using a combination of the [content], and the `primary` [scope] to find `anchor`s.
  */
 class Token(
     /** The actual content of the parsed token. */
@@ -12,7 +13,13 @@ class Token(
     /** The primary scope */
     val scope: String,/* More context for animations. */
     /** The depth of the primary scope. */
-    val depth: Int, val lineNumber: Int, val startIndex: Int, val endIndex: Int
+    val depth: Int,
+    /** The line number. */
+    val lineNumber: Int,
+    /** The column start index. */
+    val startIndex: Int,
+    /** The column end index. */
+    val endIndex: Int
 ) {
     /** The underlying content id that was assigned to the token.
      * This is guaranteed to be stable across a deck. */
@@ -28,10 +35,7 @@ class Token(
     public var related: Token? = null
         private set
 
-    /**
-     * What `index` does the [Token] occur in, after a parse tree was constructed.
-     */
-    public var index: Int = 0
+    public var relatedIndex: Int? = null
         private set
 
     fun hasContentId(): Boolean {
@@ -50,12 +54,9 @@ class Token(
         return contentId
     }
 
-    fun assignRelated(match: Token) {
-        this.related = match
-    }
-
-    fun assignIndex(index: Int) {
-        this.index = index
+    fun assignRelated(context: TokenContext) {
+        this.related = context.token
+        this.relatedIndex = context.index
     }
 
     override fun equals(other: Any?): Boolean {

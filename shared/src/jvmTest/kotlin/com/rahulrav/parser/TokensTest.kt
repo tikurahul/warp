@@ -1,5 +1,7 @@
 package com.rahulrav.parser
 
+import com.rahulrav.diff.frequencyAndContext
+import com.rahulrav.diff.isBegin
 import kotlin.test.Test
 
 class TokensTest {
@@ -18,11 +20,10 @@ class TokensTest {
     """.trimIndent()
 
         val tokens = parseKotlin(code)
-        buildRelatedTokens(tokens)
+        frequencyAndContext(tokens)
         tokens.forEach { token ->
-            if (token.related != null) {
-                println(token.related) // Matching Begin
-                println(token)
+            if (token.related != null && token.isBegin()) {
+                println("${token.content} ${token.related!!.content}")
             }
         }
     }
@@ -41,11 +42,10 @@ class TokensTest {
     """.trimIndent()
 
         val tokens = parseKotlin(code)
-        buildRelatedTokens(tokens)
+        frequencyAndContext(tokens)
         tokens.forEach { token ->
-            if (token.related != null) {
-                println(token.related) // Matching Begin
-                println(token)
+            if (token.related != null && token.isBegin()) {
+                println("${token.content} ${token.related!!.content}")
             }
         }
     }

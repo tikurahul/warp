@@ -1,6 +1,12 @@
 package com.rahulrav.diff
 
 import com.rahulrav.parser.parseKotlin
+import com.rahulrav.ui.BASIC_SLIDES
+import com.rahulrav.ui.BLOCK_MOVES
+import com.rahulrav.ui.LINE_MOVES
+import com.rahulrav.ui.LINE_MOVES_2
+import com.rahulrav.ui.TRACING_SLIDES
+import com.rahulrav.ui.buildPresentation
 import org.intellij.lang.annotations.Language
 import kotlin.test.Test
 

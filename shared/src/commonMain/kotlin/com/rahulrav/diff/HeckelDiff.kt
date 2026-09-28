@@ -1,6 +1,8 @@
 package com.rahulrav.diff
 
+import androidx.collection.MutableObjectList
 import androidx.collection.ScatterMap
+import androidx.collection.mutableObjectListOf
 import androidx.collection.mutableScatterMapOf
 import com.rahulrav.parser.Token
 
@@ -25,7 +27,10 @@ fun diff(
     val (freqC, _) = frequencyAndContext(tokens = current)
     // Phase 1: Find unique anchors such that frequency = 1 in both lists.
     // That is a match.
-    current.forEach { token ->
+    // Additionally: Keep track of the matches in an ObjectList, so we can use
+    // that in Phase 2, and 3.
+    val matches = mutableObjectListOf<State.Match>()
+    current.forEachIndexed { index, token ->
         val c = freqC[token]
         val p = freqP[token]
         val context = contextP[token]
@@ -36,73 +41,60 @@ fun diff(
             val tokenP = context.token
             val match = State.Match(
                 previous = tokenP,
+                previousIdx = context.index,
                 current = token,
+                currentIdx = index
             )
             statesP[match.previousIdx] = match
             statesC[match.currentIdx] = match
+            matches += match
         }
     }
-    // Phase 2: We found unique anchors.
+    // Phase 2, 3: We found unique anchors.
+    // Move forward and backwards, breadth first.
     // Move forward and find the ones that are matching adjacent to the ones that already matched.
-    for (index in 0 until statesC.lastIndex) {
-        val state = statesC[index]
-        val nextState = statesC[index + 1]
-        if (state is State.Match && nextState == State.Empty) {
-            val nextIndex = index + 1
-            val nextPreviousIndex = state.previousIdx + 1
-            val nextToken = current.getOrNull(nextIndex)
-            val nextPreviousToken = previous.getOrNull(nextPreviousIndex)
-            if (nextPreviousToken != null && nextToken == nextPreviousToken) {
-                val previousState = statesP[nextPreviousIndex]
-                val potential = State.Match(
-                    previous = nextPreviousToken,
-                    current = nextToken,
+    val steps = arrayOf(-1, 1)
+    while (matches.isNotEmpty()) {
+        // Use this like a stack.
+        // Process the matches FIFO.
+        val frontier = matches.removeAt(index = 0)
+        for (step in steps) {
+            val nc = frontier.currentIdx + step
+            val np = frontier.previousIdx + step
+            if (nc !in current.indices) continue
+            if (np !in previous.indices) continue
+            if (statesP[np] != State.Empty) continue
+            if (statesC[nc] != State.Empty) continue
+            if (previous[np] != current[nc]) continue
+            val match = State.Match(
+                previous = previous[np],
+                previousIdx = np,
+                current = current[nc],
+                currentIdx = nc
+            )
+            statesP[np] = match
+            statesC[nc] = match
+            matches += match
+            // Check for relationships
+            val rp = match.previous.relatedIndex
+            val rc = match.current.relatedIndex
+            if (
+                rp != null &&
+                rc != null &&
+                match.previous.related != null &&
+                match.current.related != null &&
+                statesP[rp] == State.Empty &&
+                statesC[rc] == State.Empty
+            ) {
+                val related = State.Match(
+                    previous = match.previous.related!!,
+                    previousIdx = rp,
+                    current = match.current.related!!,
+                    currentIdx = rc
                 )
-                val match = findBestMatch(potential = potential, current = previousState)
-                if (match === potential) {
-                    updateMatch(statesP, statesC, match)
-                    val related = nextToken.related
-                    val previousRelated = nextPreviousToken.related
-                    if (related != null && previousRelated != null) {
-                        val match = State.Match(
-                            previous = previousRelated,
-                            current = related,
-                        )
-                        updateMatch(statesP, statesC, match)
-                    }
-                }
-            }
-        }
-    }
-    // Phase 3: Same as Phase 2 but backwards.
-    for (index in statesC.lastIndex downTo 1) {
-        val state = statesC[index]
-        val priorState = statesC[index - 1]
-        if (state is State.Match && priorState == State.Empty) {
-            val priorIndex = index - 1
-            val nextPriorIndex = state.previousIdx - 1
-            val priorToken = current.getOrNull(priorIndex)
-            val priorPreviousToken = previous.getOrNull(nextPriorIndex)
-            if (priorToken != null && priorToken == priorPreviousToken) {
-                val nextPriorState = statesP[nextPriorIndex]
-                val potential = State.Match(
-                    previous = priorPreviousToken,
-                    current = priorToken,
-                )
-                val match = findBestMatch(potential = potential, current = nextPriorState)
-                if (match === potential) {
-                    updateMatch(statesP, statesC, match)
-                    // Related Matches
-                    val related = priorToken.related
-                    val previousRelated = priorPreviousToken.related
-                    if (related != null && previousRelated != null) {
-                        val match = State.Match(
-                            previous = previousRelated,
-                            current = related,
-                        )
-                        updateMatch(statesP, statesC, match)
-                    }
-                }
+                statesP[rp] = related
+                statesC[rc] = related
+                matches += related
             }
         }
     }
@@ -150,40 +142,20 @@ fun diff(
     return edits
 }
 
-internal fun findBestMatch(potential: State.Match, current: State): State.Match {
-    return if (current is State.Match) {
-        if (current.penalty() <= potential.penalty()) {
-            current
-        } else {
-            potential
-        }
-    } else {
-        potential
-    }
-}
+data class TokenContext(val token: Token, val index: Int)
 
-internal fun updateMatch(statesP: Array<State>, statesC: Array<State>, match: State.Match) {
-    val oldP = statesP[match.previousIdx]
-    val oldC = statesC[match.currentIdx]
-    if (oldP is State.Match) {
-        statesC[oldP.currentIdx] = State.Empty
-    }
-    if (oldC is State.Match) {
-        statesP[oldC.previousIdx] = State.Empty
-    }
-    statesP[match.previousIdx] = match
-    statesC[match.currentIdx] = match
-}
-
-internal data class TokenContext(val token: Token, val index: Int)
+/** The search limit when looking for matching tokens in the stack. */
+internal const val SEARCH_LIMIT = 3
 
 internal fun frequencyAndContext(
     tokens: List<Token>
 ): Pair<ScatterMap<Token, Int>, ScatterMap<Token, TokenContext?>> {
+    val stack = MutableObjectList<TokenContext>()
     val freq = mutableScatterMapOf<Token, Int>()
     // Context for tokens whose count == 1
     val indexes = mutableScatterMapOf<Token, TokenContext?>()
     tokens.forEachIndexed { index, token ->
+        relatedToken(token = token, index = index, stack = stack)
         val count = freq.getOrDefault(token, 0)
         if (count == 0) {
             indexes[token] = TokenContext(token = token, index = index)
@@ -195,4 +167,75 @@ internal fun frequencyAndContext(
         freq[token] = count + 1
     }
     return freq to indexes
+}
+
+/**
+ * Builds related tokens, when applicable. This is only ever populated for [Token]s that are
+ * brackets. So `}`, `]`, `>`, `)` will point to their corresponding matching pairs. This helps
+ * ensure that once we find a match for one of these [Token]s, we also match the corresponding
+ * related tokens.
+ */
+internal fun relatedToken(token: Token, index: Int, stack: MutableObjectList<TokenContext>) {
+    if (token.ignoreScope()) return
+    if (token.isBegin()) {
+        stack += TokenContext(token = token, index = index)
+    } else if (token.isEnd()) {
+        var i = 0
+        while (i < SEARCH_LIMIT) {
+            val stackIndex = stack.lastIndex - i
+            // Check for out of bounds
+            if (stackIndex < 0) break
+            val candidate = stack[stackIndex]
+            if (isMatching(begin = candidate.token, end = token)) {
+                stack.removeAt(stackIndex)
+                // Assign relationships to each other.
+                token.assignRelated(candidate)
+                candidate.token.assignRelated(context = TokenContext(index = index, token = token))
+                break
+            }
+            i += 1
+        }
+    }
+}
+
+internal fun Token.ignoreScope(): Boolean {
+    // Comments and String literals should be ignored
+    // We don't need to find matching pairs for them.
+    return when {
+        scope == "comment" -> true
+        scope.startsWith("comment.") -> true
+
+        scope == "string" -> true
+        scope.startsWith("string.") -> true
+
+        else -> false
+    }
+}
+
+internal fun isMatching(begin: Token, end: Token): Boolean {
+    if (begin.content == "{" && end.content == "}") return true
+    if (begin.content == "[" && end.content == "]") return true
+    if (begin.content == "<" && end.content == ">") return true
+    if (begin.content == "(" && end.content == ")") return true
+    return false
+}
+
+internal fun Token.isBegin(): Boolean {
+    return when (content) {
+        "{" -> true
+        "[" -> true
+        "<" -> true
+        "(" -> true
+        else -> false
+    }
+}
+
+internal fun Token.isEnd(): Boolean {
+    return when (content) {
+        "}" -> true
+        "]" -> true
+        ">" -> true
+        ")" -> true
+        else -> false
+    }
 }
